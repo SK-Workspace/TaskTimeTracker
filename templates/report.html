@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Report</title>
+    <!-- Linking to an external CSS file -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Log File</h1>
+        <form id="uploadForm" method="POST" enctype="multipart/form-data">
+            <input type="file" id="file" name="file" onchange="updateLabel()">
+            <label for="file" id="fileLabel">Choose file</label>
+            <button type="submit">Upload and analyze</button>
+        </form>
+        <button id="viewDoc">View Documentation</button>
+    </div>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            var file = document.getElementById('file').value;
+            if (!file) {
+                e.preventDefault(); // stop form from submitting
+                alert('Please select a file before uploading.');
+            }
+        });
+
+        function updateLabel() {
+            var fileName = document.getElementById('file').value;
+            fileName = fileName.substring(fileName.lastIndexOf("\\") + 1);
+            document.getElementById('fileLabel').textContent = fileName;
+        }
+
+        // Add an event listener to the "View Documentation" button
+        document.getElementById('viewDoc').addEventListener('click', function() {
+        // Use window.location.href to navigate to the PDF file
+        window.open("{{ url_for('static', filename='documentation/Guide.pdf') }}", '_blank');
+        });
+        </script>
+    
+    <!-- Display report details when log file is uploaded and report data is available.-->
+    {% if report %}
+        <div class="container">
+            <div>{{ report.discrepancies | length }} discrepancies found in the logs</div>
+            <h1>Report</h1>
+            <!-- Button to toggle the display of the 'Time Spent' section -->
+            <button type="button" class="collapsible">Time Spent <span class="indicator">[+ Expand]</span></button>
+            <div class="content">
+                <!-- Table to display the time spent by each user on each task -->
+                <table>
+                    <tr>
+                        <th>UserID</th>
+                        <th>TaskID</th>
+                        <th>Time Spent</th>
+                    </tr>
+                    <!-- Loop through each item in the 'total_time' dictionary of the 'report' object -->
+                    {% for user_task, time in report.total_time.items() %}
+                    <tr>
+                        <!-- Display the user ID, task ID, and time spent -->
+                        <td>{{ user_task.split()[1] }}</td>
+                        <td>{{ user_task.split()[3] }}</td>
+                        <td>{{ time }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>           
+            </div>
+            <!-- Button to toggle the display of the 'Discrepancies' section -->
+            <button type="button" class="collapsible">Discrepancies <span class="indicator">[+ Expand]</span></button>
+            <div class="content">
+                <!-- Table to display the discrepancies -->
+                <table>
+                    <tr>
+                        <th>UserID</th>
+                        <th>TaskID</th>
+                        <th>Timestamp</th>
+                        <th>Discrepancy</th>
+                    </tr>
+                    <!-- Loop through each item in the 'discrepancies' list of the 'report' object -->
+                    {% for discrepancy in report.discrepancies %}
+                    <tr>
+                        <!-- Display the user ID, task ID, timestamp, and discrepancy -->
+                        <td>{{ discrepancy.split()[0] }}</td>
+                        <td>{{ discrepancy.split()[1] }}</td>
+                        <td>{{ ' '.join(discrepancy.split()[2:4]) }}</td>
+                        <td>{{ ' '.join(discrepancy.split()[4:])}}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        <script>
+            // Get all elements with class="collapsible"
+            var coll = document.getElementsByClassName("collapsible");
+            var i;
+            // Add click event listener to each collapsible element
+            for (i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    // Toggle the 'active' class for the clicked element
+                    this.classList.toggle("active");
+                    // Get the next sibling element (the content to be collapsed/expanded)
+                    var content = this.nextElementSibling;
+                    // Get the indicator element within the clicked element
+                    var indicator = this.getElementsByClassName("indicator")[0];
+                    // If the content is currently displayed, hide it and change the indicator text
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                        indicator.textContent = "[+ Expand]";
+                    } else {
+                        // If the content is currently hidden, display it and change the indicator text
+                        content.style.display = "block";
+                        indicator.textContent = "[- Collapse]";
+                    }
+                });
+            }
+        </script>
+    {% endif %}
+</body>
+</html>
