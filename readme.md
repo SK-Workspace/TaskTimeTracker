@@ -29,7 +29,7 @@ pip install flask
 
 <pre>
 <code>
-python app.py
+python main.py
 </code>
 </pre>
 
